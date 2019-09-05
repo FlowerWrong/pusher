@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+</head>
+
+<body>
+    <h1>Hello, world!</h1>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script src="https://js.pusher.com/4.4/pusher.min.js"></script>
+
+    <script>
+        $(function () {
+            console.log("ready!");
+
+            Pusher.log = function (message) {
+                console.log(message);
+            };
+            window.pusher = new Pusher('app-key', {
+                wsHost: 'localhost',
+                wsPort: 8100,
+                wssPort: 4433,    // Required if encrypted is true
+                encrypted: false, // Optional. the application must use only SSL connections
+                enabledTransports: ["ws", "flash"],
+                disabledTransports: ["flash"]
+            });
+
+            // public channel
+            var channel = pusher.subscribe('my-channel');
+            channel.bind('my-event', function (data) {
+                console.log(data);
+                alert('An public channel event was triggered with message: ' + data.message);
+            });
+            channel.bind('pusher:subscription_succeeded', function () {
+                console.log('public channel pusher:subscription_succeeded');
+            });
+            channel.bind('pusher:subscription_error', function (status) {
+                console.log('public channel pusher:subscription_error', status);
+            });
+
+            // private channel
+            var privateChannel = pusher.subscribe('private-my-channel');
+            privateChannel.bind('my-event', function (data) {
+                console.log(data);
+                alert('An private channel event was triggered with message: ' + data.message);
+            });
+            privateChannel.bind('pusher:subscription_succeeded', function () {
+                console.log('private channel pusher:subscription_succeeded');
+                var triggered = privateChannel.trigger('client-my-event', { "message": "hello client event", "payload": { "uid": 1 } });
+                console.log(triggered);
+            });
+            privateChannel.bind('pusher:subscription_error', function (status) {
+                console.log('private channel pusher:subscription_error', status);
+            });
+
+            // presence channel https://pusher.com/docs/channels/using_channels/presence-channels#events
+            var presenceChannel = pusher.subscribe('presence-my-channel');
+            presenceChannel.bind('pusher:subscription_succeeded', function (members) {
+                console.log('presence channel pusher:subscription_succeeded');
+                console.log(members);
+            })
+            presenceChannel.bind('pusher:subscription_error', function (status) {
+                console.log('presence channel pusher:subscription_error', status);
+            });
+            presenceChannel.bind('pusher:member_added', function (member) {
+                console.log(member, 'added');
+            });
+            presenceChannel.bind('pusher:member_removed', function (member) {
+                console.log(member, 'removed');
+            });
+        });
+    </script>
+</body>
+
+</html>

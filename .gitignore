@@ -1,0 +1,10 @@
+.DS_Store
+
+.idea/
+config/settings.development.yml
+config/settings.test.yml
+config/settings.production.yml
+
+tmp/
+
+node_modules/
