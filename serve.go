@@ -38,10 +38,6 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, appKey, client, v
 		return
 	}
 
-	pongTimeout = time.Duration(viper.GetInt64("pusher_pong_timeout")) * time.Second
-	activityTimeout = time.Duration(viper.GetInt64("pusher_activity_timeout")) * time.Second
-	readTimeout = activityTimeout / 9 * 10
-
 	socketID := GenerateSocketID()
 	session := &Session{hub: hub, conn: conn, client: client, version: version, protocol: protocol, send: make(chan []byte, maxMessageSize), subscriptions: make(map[string]bool), pubSub: new(redis.PubSub), socketID: socketID, closed: false}
 	session.hub.register <- session

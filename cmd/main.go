@@ -31,6 +31,8 @@ func main() {
 		panic(errors.New("Invalid app id"))
 	}
 
+	pusher.InitVar()
+
 	log.Infoln("Pusher launch in", config.AppEnv)
 
 	hub := pusher.NewHub()
@@ -39,11 +41,6 @@ func main() {
 	router := gin.New()
 	router.Use(middlewares.Logger(log.Logger()))
 	router.Use(gin.Recovery())
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
 
 	signatureGroup := router.Group("/apps", middlewares.Signature())
 	{

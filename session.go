@@ -2,7 +2,6 @@ package pusher
 
 import (
 	"encoding/json"
-	"net/http"
 	"sync"
 	"time"
 
@@ -10,19 +9,6 @@ import (
 	"github.com/FlowerWrong/pusher/log"
 	"github.com/go-redis/redis"
 	"github.com/gorilla/websocket"
-)
-
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
-	// Maximum message size allowed from peer.
-	maxMessageSize = 1024
-)
-
-var (
-	pongTimeout     time.Duration
-	activityTimeout time.Duration
-	readTimeout     time.Duration
 )
 
 // Session is a middleman between the websocket connection and the hub.
@@ -38,12 +24,6 @@ type Session struct {
 	pubSub        *redis.PubSub
 	socketID      string
 	closed        bool
-}
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin:     func(r *http.Request) bool { return true },
-	ReadBufferSize:  maxMessageSize,
-	WriteBufferSize: maxMessageSize,
 }
 
 func (s *Session) resetReadTimeout() {
