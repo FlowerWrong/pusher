@@ -4,16 +4,9 @@ import "github.com/FlowerWrong/pusher/log"
 
 // Hub maintains the set of active sessions and broadcasts messages to the sessions.
 type Hub struct {
-	// Registered sessions.
-	sessions map[*Session]bool
-
-	// Inbound messages from the sessions.
-	broadcast chan []byte
-
-	// Register requests from the sessions.
-	register chan *Session
-
-	// Unregister requests from sessions.
+	sessions   map[*Session]bool
+	broadcast  chan []byte
+	register   chan *Session
 	unregister chan *Session
 }
 

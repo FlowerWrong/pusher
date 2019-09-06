@@ -15,7 +15,6 @@ import (
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
-
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024
 )
@@ -28,25 +27,17 @@ var (
 
 // Session is a middleman between the websocket connection and the hub.
 type Session struct {
-	hub *Hub
-
-	// The websocket connection.
-	conn *websocket.Conn
-
-	client   string
-	version  string
-	protocol int
-
-	// Buffered channel of outbound messages.
-	send chan []byte
-
+	hub           *Hub
+	conn          *websocket.Conn
+	client        string
+	version       string
+	protocol      int
+	send          chan []byte // Buffered channel of outbound messages.
 	mutex         sync.Mutex
 	subscriptions map[string]bool
 	pubSub        *redis.PubSub
-
-	socketID string
-
-	closed bool
+	socketID      string
+	closed        bool
 }
 
 var upgrader = websocket.Upgrader{
@@ -165,6 +156,82 @@ func (s *Session) unsubscribe(channel string) error {
 	return nil
 }
 
+func (s *Session) unsubscribeSuccessCallback(channel string) error {
+	delete(s.subscriptions, channel)
+	err := DelSubscription(channel, s.socketID)
+	if err != nil {
+		return err
+	}
+
+	if ChannelSubscriberCount(channel) == 0 {
+		hookEvent := HookEvent{Name: "channel_vacated", Channel: channel}
+		go TriggerHook(&hookEvent)
+	}
+
+	if IsPresenceChannel(channel) {
+		err = PublishPresenceMemberRemovedEvent(s.socketID, channel)
+		if err != nil {
+			return err
+		}
+
+		err = DelUserInfoFields(s.socketID, UserInfoAuthKey(channel), UserInfoChannelDataKey(channel))
+		if err != nil {
+			return err
+		}
+	}
+
+	if IsPrivateChannel(channel) {
+		err = DelUserInfoFields(s.socketID, UserInfoAuthKey(channel))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Session) subscribeSuccessCallback(channel string) error {
+	s.subscriptions[channel] = true
+	err := AddChannelAndSubscription(channel, s.socketID)
+	if err != nil {
+		return err
+	}
+
+	if ChannelSubscriberCount(channel) == 1 {
+		hookEvent := HookEvent{Name: "channel_occupied", Channel: channel}
+		go TriggerHook(&hookEvent)
+	}
+
+	if IsPresenceChannel(channel) {
+		var presenceData PresenceData
+		presenceData.Hash = make(map[string]map[string]string)
+		subscriptions := GetSubscriptions(channel)
+
+		for _, socketID := range subscriptions {
+			presenceChannelData, err := GetPresenceChannelData(socketID, channel)
+			if err != nil {
+				return err
+			}
+			presenceData.IDs = append(presenceData.IDs, presenceChannelData.UserID)
+			presenceData.Hash[presenceChannelData.UserID] = presenceChannelData.UserInfo
+		}
+		presenceData.Count = len(subscriptions)
+
+		b, err := json.Marshal(map[string]PresenceData{"presence": presenceData})
+		if err != nil {
+			return err
+		}
+		s.Send(SubscriptionSucceededPack(channel, string(b[:])))
+
+		err = PublishPresenceMemberAddedEvent(s.socketID, channel)
+		if err != nil {
+			return err
+		}
+	} else {
+		s.Send(SubscriptionSucceededPack(channel, "{}"))
+	}
+	return nil
+}
+
 func (s *Session) subscribePump() {
 	defer func() {
 		s.hub.unregister <- s
@@ -186,87 +253,19 @@ func (s *Session) subscribePump() {
 				if s.subscriptions[channel] {
 					continue
 				}
-
-				s.subscriptions[channel] = true
-				err := AddChannelAndSubscription(channel, s.socketID)
+				err = s.subscribeSuccessCallback(channel)
 				if err != nil {
 					log.Error(err)
 					return
-				}
-
-				if ChannelSubscriberCount(channel) == 1 {
-					hookEvent := HookEvent{Name: "channel_occupied", Channel: channel}
-					go TriggerHook(&hookEvent)
-				}
-
-				if IsPresenceChannel(channel) {
-					var presenceData PresenceData
-					presenceData.Hash = make(map[string]map[string]string)
-					subscriptions := GetSubscriptions(channel)
-
-					for _, socketID := range subscriptions {
-						presenceChannelData, err := GetPresenceChannelData(socketID, channel)
-						if err != nil {
-							log.Error(err)
-							return
-						}
-						presenceData.IDs = append(presenceData.IDs, presenceChannelData.UserID)
-						presenceData.Hash[presenceChannelData.UserID] = presenceChannelData.UserInfo
-					}
-					presenceData.Count = len(subscriptions)
-
-					b, err := json.Marshal(map[string]PresenceData{"presence": presenceData})
-					if err != nil {
-						log.Error(err)
-						return
-					}
-					s.Send(SubscriptionSucceededPack(channel, string(b[:])))
-
-					err = PublishPresenceMemberAddedEvent(s.socketID, channel)
-					if err != nil {
-						log.Error(err)
-						return
-					}
-				} else {
-					s.Send(SubscriptionSucceededPack(channel, "{}"))
 				}
 			case "unsubscribe":
 				if !s.subscriptions[channel] {
 					continue
 				}
-
-				delete(s.subscriptions, channel)
-				err = DelSubscription(channel, s.socketID)
+				err = s.unsubscribeSuccessCallback(channel)
 				if err != nil {
 					log.Error(err)
 					return
-				}
-
-				if ChannelSubscriberCount(channel) == 0 {
-					hookEvent := HookEvent{Name: "channel_vacated", Channel: channel}
-					go TriggerHook(&hookEvent)
-				}
-
-				if IsPresenceChannel(channel) {
-					err = PublishPresenceMemberRemovedEvent(s.socketID, channel)
-					if err != nil {
-						log.Error(err)
-						return
-					}
-
-					err = DelUserInfoFields(s.socketID, UserInfoAuthKey(channel), UserInfoChannelDataKey(channel))
-					if err != nil {
-						log.Error(err)
-						return
-					}
-				}
-
-				if IsPrivateChannel(channel) {
-					err = DelUserInfoFields(s.socketID, UserInfoAuthKey(channel))
-					if err != nil {
-						log.Error(err)
-						return
-					}
 				}
 			default:
 				log.Error("unhandled subscription kind", msg.Kind)
