@@ -8,3 +8,5 @@ config/settings.production.yml
 tmp/
 
 node_modules/
+
+pusher

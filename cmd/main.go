@@ -9,7 +9,7 @@ import (
 
 	"github.com/FlowerWrong/pusher"
 	"github.com/FlowerWrong/pusher/api"
-	"github.com/FlowerWrong/pusher/config"
+	"github.com/FlowerWrong/pusher/env"
 	"github.com/FlowerWrong/pusher/log"
 	"github.com/FlowerWrong/pusher/middlewares"
 	"github.com/gin-gonic/gin"
@@ -20,20 +20,18 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	configFile := flag.String("config", "./config/settings.yml", "config file path")
+	configFile := flag.String("config", "./settings.yml", "config file path")
 	flag.Parse()
-	err := config.Setup(*configFile)
+	err := pusher.Setup(*configFile)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
-	if !pusher.ValidAppID(viper.GetString("pusher_app_id")) {
-		panic(errors.New("Invalid app id"))
+	if !pusher.ValidAppID(viper.GetString("APP_ID")) {
+		log.Panic(errors.New("Invalid app id"))
 	}
 
-	pusher.InitVar()
-
-	log.Infoln("Pusher launch in", config.AppEnv)
+	log.Infoln("Pusher launch in", pusher.AppEnv)
 
 	hub := pusher.NewHub()
 	go hub.Run()
@@ -61,5 +59,5 @@ func main() {
 		pusher.ServeWs(hub, c.Writer, c.Request, appKey, client, version, protocol)
 	})
 
-	_ = router.Run(viper.GetString("pusher_url"))
+	_ = router.Run(":" + env.Get("PORT", "8100"))
 }

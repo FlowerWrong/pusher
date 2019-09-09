@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FlowerWrong/pusher/config"
+	"github.com/FlowerWrong/pusher/env"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,7 +21,7 @@ func init() {
 
 func initLogger() {
 	logger = logrus.New()
-	if config.AppEnv == "production" {
+	if env.Get("APP_ENV", "development") == "production" {
 		logger.SetFormatter(&logrus.JSONFormatter{})
 	} else {
 		// The TextFormatter is default, you don't actually have to do this.

@@ -1,0 +1,10 @@
+# REDIS_URL: "redis://:@localhost:6379/1"
+# PORT: 8100
+APP_ID: "123456789"
+APP_KEY: "app-key"
+APP_SECRET: "app-secret"
+WEBHOOK_ENABLED: true
+WEBHOOK_URL: "http://127.0.0.1:8080/pusher/webhook"
+ACTIVITY_TIMEOUT: 120
+PONG_TIMEOUT: 30
+TIMESTAMP_GRACE: 600

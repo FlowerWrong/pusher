@@ -22,7 +22,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, appKey, client, v
 		return
 	}
 
-	if appKey != viper.GetString("pusher_app_key") {
+	if appKey != viper.GetString("APP_KEY") {
 		log.Error("Error app key", appKey)
 		_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
 		_ = conn.WriteMessage(websocket.TextMessage, ErrPack(4001))

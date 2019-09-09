@@ -6,7 +6,10 @@
 ## How to start?
 
 ```bash
-go run cmd/main.go --config=./config/settings.yml
+go run cmd/main.go --config=./settings.yml
+
+GOOS=linux GOARCH=amd64 go build -o pusher cmd/main.go
+GOOS=darwin GOARCH=amd64 go build -o pusher cmd/main.go
 ```
 
 ## Requirements

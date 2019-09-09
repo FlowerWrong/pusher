@@ -3,8 +3,8 @@ package db
 import (
 	"sync"
 
+	"github.com/FlowerWrong/pusher/env"
 	"github.com/go-redis/redis"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 )
 
 func initRedisClient() error {
-	redisOptions, err := redis.ParseURL(viper.GetString("redis_url"))
+	redisOptions, err := redis.ParseURL(env.Get("REDIS_URL", "redis://:@localhost:6379/1"))
 	redisClient = redis.NewClient(redisOptions)
 
 	_, err = redisClient.Ping().Result()

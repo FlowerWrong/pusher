@@ -12,7 +12,7 @@ import (
 func Signature() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		appID := c.Param("app_id")
-		if appID != viper.GetString("pusher_app_id") {
+		if appID != viper.GetString("APP_ID") {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid app id"})
 			c.Abort()
 			return

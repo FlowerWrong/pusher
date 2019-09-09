@@ -1,9 +1,10 @@
 FROM golang:latest
 
-WORKDIR $GOPATH/src/github.com/FlowerWrong/pusher
-COPY . $GOPATH/src/github.com/FlowerWrong/pusher
-RUN go get -u -v ./...
-RUN go build -o pusher cmd/main.go
+WORKDIR $GOPATH/bin
+COPY ./pusher $GOPATH/bin
+COPY ./settings.yml $GOPATH/bin
+
+ENV APP_ENV=production PORT=8100 REDIS_URL=redis://:@localhost:6379/1
 
 EXPOSE 8100
 ENTRYPOINT ["./pusher"]

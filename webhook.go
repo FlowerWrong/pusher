@@ -25,7 +25,7 @@ type HookEvent struct {
 
 // TriggerHook @doc https://pusher.com/docs/channels/server_api/webhooks
 func TriggerHook(events ...*HookEvent) {
-	if !viper.GetBool("pusher_webhook_enabled") {
+	if !viper.GetBool("WEBHOOK_ENABLED") {
 		return
 	}
 	timeMs := time.Now().UnixNano() / 1e6
@@ -42,10 +42,10 @@ func TriggerHook(events ...*HookEvent) {
 
 	resp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
-		SetHeader("X-Pusher-Key", viper.GetString("pusher_app_key")).
-		SetHeader("X-Pusher-Signature", HmacSignature(string(b[:]), viper.GetString("pusher_app_secret"))).
+		SetHeader("X-Pusher-Key", viper.GetString("APP_KEY")).
+		SetHeader("X-Pusher-Signature", HmacSignature(string(b[:]), viper.GetString("APP_SECRET"))).
 		SetBody(b).
-		Post(viper.GetString("pusher_webhook_url"))
+		Post(viper.GetString("WEBHOOK_URL"))
 	if !resp.IsSuccess() {
 		// TODO retry
 	}

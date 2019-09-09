@@ -25,7 +25,7 @@ func Verify(r *http.Request) (bool, error) {
 	}
 
 	timestamp, _ := Str2Int64(query.Get("auth_timestamp"))
-	if !checkTimestamp(timestamp, viper.GetInt64("pusher_timestamp_grace")) {
+	if !checkTimestamp(timestamp, viper.GetInt64("TIMESTAMP_GRACE")) {
 		return false, errors.New("invalid timestamp")
 	}
 
@@ -33,7 +33,7 @@ func Verify(r *http.Request) (bool, error) {
 	query.Del("auth_signature")
 	queryString := prepareQueryString(query)
 	stringToSign := strings.Join([]string{strings.ToUpper(r.Method), r.URL.Path, queryString}, "\n")
-	return HmacSignature(stringToSign, viper.GetString("pusher_app_secret")) == signature, nil
+	return HmacSignature(stringToSign, viper.GetString("APP_SECRET")) == signature, nil
 }
 
 // HmacSignature ...

@@ -46,7 +46,7 @@ type EstablishData struct {
 
 // EstablishPack Channels -> Client
 func EstablishPack(socketID string) []byte {
-	data := EstablishData{SocketID: socketID, ActivityTimeout: viper.GetInt("pusher_activity_timeout")}
+	data := EstablishData{SocketID: socketID, ActivityTimeout: viper.GetInt("ACTIVITY_TIMEOUT")}
 	b, err := json.Marshal(data)
 	if err != nil {
 		panic(err)
