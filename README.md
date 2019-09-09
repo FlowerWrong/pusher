@@ -30,6 +30,7 @@ GOOS=darwin GOARCH=amd64 go build -o pusher cmd/main.go
 * [ ] integration test
 * [ ] benchmark
 * [ ] redis master slave
+* [x] redis cluster
 * [ ] support other pubsub message brokers
 * [ ] apm
 

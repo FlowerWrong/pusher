@@ -3,18 +3,29 @@ package db
 import (
 	"sync"
 
-	"github.com/FlowerWrong/pusher/env"
+	"github.com/FlowerWrong/pusher/log"
 	"github.com/go-redis/redis"
+	"github.com/spf13/viper"
 )
 
 var (
-	redisClient *redis.Client
+	redisClient redis.UniversalClient
 	redisOnce   sync.Once
 )
 
 func initRedisClient() error {
-	redisOptions, err := redis.ParseURL(env.Get("REDIS_URL", "redis://:@localhost:6379/1"))
-	redisClient = redis.NewClient(redisOptions)
+	redisOptions, err := redis.ParseURL(viper.GetString("REDIS_URL"))
+	if err != nil {
+		return err
+	}
+	universalOptions := &redis.UniversalOptions{
+		Addrs:       []string{redisOptions.Addr},
+		DB:          redisOptions.DB,
+		Password:    redisOptions.Password,
+		PoolSize:    redisOptions.PoolSize,
+		PoolTimeout: redisOptions.PoolTimeout,
+	}
+	redisClient = redis.NewUniversalClient(universalOptions)
 
 	_, err = redisClient.Ping().Result()
 	if err != nil {
@@ -24,12 +35,20 @@ func initRedisClient() error {
 }
 
 // Redis return redis client
-func Redis() *redis.Client {
+func Redis() redis.UniversalClient {
 	if redisClient == nil {
 		redisOnce.Do(func() {
-			err := initRedisClient()
-			if err != nil {
-				panic(err)
+			redisURLs := viper.GetStringSlice("REDIS_URL")
+			if len(redisURLs) > 1 {
+				err := initClusterRedisClient()
+				if err != nil {
+					log.Panic(err)
+				}
+			} else {
+				err := initRedisClient()
+				if err != nil {
+					log.Panic(err)
+				}
 			}
 		})
 	}

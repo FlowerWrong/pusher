@@ -59,5 +59,5 @@ func main() {
 		pusher.ServeWs(hub, c.Writer, c.Request, appKey, client, version, protocol)
 	})
 
-	_ = router.Run(":" + env.Get("PORT", "8100"))
+	_ = router.Run(env.Get("BIND_ADDR", "127.0.0.1") + ":" + env.Get("BIND_PORT", "8100"))
 }

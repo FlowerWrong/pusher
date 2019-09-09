@@ -1,5 +1,6 @@
-# REDIS_URL: "redis://:@localhost:6379/1"
-# PORT: 8100
+REDIS_URL:
+  - "redis://:@localhost:6379/1"
+  - "redis://:@localhost:6379/2"
 APP_ID: "123456789"
 APP_KEY: "app-key"
 APP_SECRET: "app-secret"
