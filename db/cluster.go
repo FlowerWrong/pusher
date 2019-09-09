@@ -3,13 +3,11 @@ package db
 import (
 	"github.com/FlowerWrong/pusher/log"
 	"github.com/go-redis/redis"
-	"github.com/spf13/viper"
 )
 
-func initClusterRedisClient() error {
+func initClusterRedisClient(redisURLs []string) error {
 	var err error
 	var nodes []string
-	redisURLs := viper.GetStringSlice("REDIS_URL")
 	var redisOptions *redis.Options
 	for _, redisURL := range redisURLs {
 		redisOptions, err = redis.ParseURL(redisURL)

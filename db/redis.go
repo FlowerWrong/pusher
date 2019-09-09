@@ -13,8 +13,8 @@ var (
 	redisOnce   sync.Once
 )
 
-func initRedisClient() error {
-	redisOptions, err := redis.ParseURL(viper.GetString("REDIS_URL"))
+func initRedisClient(redisURL string) error {
+	redisOptions, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return err
 	}
@@ -40,12 +40,12 @@ func Redis() redis.UniversalClient {
 		redisOnce.Do(func() {
 			redisURLs := viper.GetStringSlice("REDIS_URL")
 			if len(redisURLs) > 1 {
-				err := initClusterRedisClient()
+				err := initClusterRedisClient(redisURLs)
 				if err != nil {
 					log.Panic(err)
 				}
 			} else {
-				err := initRedisClient()
+				err := initRedisClient(redisURLs[0])
 				if err != nil {
 					log.Panic(err)
 				}
@@ -53,24 +53,4 @@ func Redis() redis.UniversalClient {
 		})
 	}
 	return redisClient
-}
-
-// AsksKey ...
-func AsksKey(symbol string) string {
-	return "exchange:" + symbol + ":depth:asks"
-}
-
-// BidsKey ...
-func BidsKey(symbol string) string {
-	return "exchange:" + symbol + ":depth:bids"
-}
-
-// DepthKey ...
-func DepthKey(symbol string) string {
-	return "exchange:" + symbol + ":depth"
-}
-
-// OrderBookKey ...
-func OrderBookKey(symbol string) string {
-	return "exchange:" + symbol + ":order_book"
 }
