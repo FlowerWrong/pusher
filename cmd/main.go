@@ -9,7 +9,6 @@ import (
 
 	"github.com/FlowerWrong/pusher"
 	"github.com/FlowerWrong/pusher/api"
-	"github.com/FlowerWrong/pusher/env"
 	"github.com/FlowerWrong/pusher/log"
 	"github.com/FlowerWrong/pusher/middlewares"
 	"github.com/gin-gonic/gin"
@@ -59,5 +58,5 @@ func main() {
 		pusher.ServeWs(hub, c.Writer, c.Request, appKey, client, version, protocol)
 	})
 
-	_ = router.Run(env.Get("BIND_ADDR", "127.0.0.1") + ":" + env.Get("BIND_PORT", "8100"))
+	_ = router.Run(viper.GetString("BIND_ADDR") + ":" + viper.GetString("BIND_PORT"))
 }

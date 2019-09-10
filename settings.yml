@@ -1,3 +1,5 @@
+BIND_ADDR: 127.0.0.1
+BIND_PORT: 8100
 REDIS_URL:
   - "redis://:@localhost:6379/1"
 APP_ID: "123456789"
